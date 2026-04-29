@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Persona Chat - Refreshed Design</title>
+    <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&display=swap">
+    <style>
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #8b5cf6;
+            --primary-light: #4c1d95;
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #111114;
+            --surface: #1a1a22;
+            --surface-hover: #242430;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --border: #2a2a3e;
+            --border-hover: #3a3a4e;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        body {
+            font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--gradient);
+            min-height: 100dvh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .app {
+            width: 100%;
+            max-width: 800px;
+            height: 90dvh;
+            max-height: 900px;
+            background: var(--bg-primary);
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        @media (min-width: 768px) {
+            .app {
+                height: 85dvh;
+            }
+        }
+
+        /* Header */
+        .header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-secondary);
+            flex-shrink: 0;
+        }
+
+        .header-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 16px;
+        }
+
+        .persona-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .persona-btn {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid var(--border);
+            background: transparent;
+            border-radius: 16px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            line-height: 1.4;
+            text-align: center;
+            font-family: inherit;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .persona-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .persona-btn:hover:not(.active)::before {
+            left: 100%;
+        }
+
+        .persona-btn:hover:not(.active) {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: var(--surface-hover);
+            transform: translateY(-2px);
+        }
+
+        .persona-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: var(--text-primary);
+            box-shadow: 0 10px 25px rgba(139, 92, 246, 0.3);
+        }
+
+        /* Chat window */
+        .chat-window {
+            flex: 1;
+            overflow-y: auto;
+            padding: 32px 24px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            background: var(--bg-primary);
+        }
+
+        .chat-window::-webkit-scrollbar { width: 6px; }
+        .chat-window::-webkit-scrollbar-track { background: transparent; }
+        .chat-window::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+        .chat-window::-webkit-scrollbar-thumb:hover {
+            background: var(--border-hover);
+        }
+
+        /* Messages */
+        .message-row {
+            display: flex;
+            gap: 12px;
+            max-width: 85%;
+            animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes slideIn {
+            from { 
+                opacity: 0; 
+                transform: translateY(20px) scale(0.95); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0) scale(1); 
+            }
+        }
+
+        .message-row.bot { align-self: flex-start; }
+        .message-row.user { align-self: flex-end; flex-direction: row-reverse; }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            overflow: hidden;
+            flex-shrink: 0;
+            background: var(--surface);
+            border: 2px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .bubble {
+            padding: 16px 20px;
+            border-radius: 20px;
+            font-size: 15px;
+            line-height: 1.6;
+            max-width: 100%;
+            word-break: break-word;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .message-row.bot .bubble {
+            background: var(--surface);
+            color: var(--text-primary);
+            border-bottom-left-radius: 8px;
+        }
+
+        .message-row.user .bubble {
+            background: var(--primary);
+            color: white;
+            border-bottom-right-radius: 8px;
+        }
+
+        .bubble.error {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--error);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        /* Typing indicator */
+        .typing-row {
+            display: flex;
+            gap: 12px;
+            align-self: flex-start;
+            animation: slideIn 0.4s ease;
+        }
+
+        .typing-dots {
+            background: var(--surface);
+            padding: 16px 20px;
+            border-radius: 20px;
+            border-bottom-left-radius: 8px;
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .typing-dots span {
+            width: 8px;
+            height: 8px;
+            background: var(--text-secondary);
+            border-radius: 50%;
+            animation: typingBounce 1.4s infinite ease-in-out;
+        }
+
+        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typingBounce {
+            0%, 80%, 100% { transform: scale(0.8); }
+            40% { transform: scale(1.2); }
+        }
+
+        /* Suggestion chips */
+        .chips-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-self: flex-start;
+            margin-top: 12px;
+            animation: slideIn 0.5s ease;
+        }
+
+        .chip {
+            padding: 10px 20px;
+            border: 2px solid var(--border);
+            border-radius: 25px;
+            font-size: 13.5px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            background: transparent;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: inherit;
+            backdrop-filter: blur(10px);
+        }
+
+        .chip:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: rgba(139, 92, 246, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(139, 92, 246, 0.2);
+        }
+
+        /* Input area */
+        .input-area {
+            padding: 24px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 16px;
+            align-items: end;
+            flex-shrink: 0;
+            background: var(--bg-secondary);
+        }
+
+        .input-area input {
+            flex: 1;
+            padding: 16px 24px;
+            border: 2px solid var(--border);
+            border-radius: 24px;
+            font-size: 15px;
+            outline: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: inherit;
+            background: var(--surface);
+            color: var(--text-primary);
+            resize: none;
+            min-height: 20px;
+            max-height: 120px;
+        }
+
+        .input-area input:focus {
+            border-color: var(--primary);
+            background: var(--surface-hover);
+            box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
+        }
+
+        .input-area input::placeholder { 
+            color: var(--text-secondary); 
+        }
+
+        .input-area input:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .send-btn {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            border: none;
+            background: var(--primary);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            flex-shrink: 0;
+            box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3);
+        }
+
+        .send-btn:hover:not(:disabled) { 
+            transform: translateY(-4px) scale(1.05);
+            box-shadow: 0 12px 30px rgba(139, 92, 246, 0.4);
+        }
+
+        .send-btn:active:not(:disabled) { 
+            transform: scale(0.95); 
+        }
+
+        .send-btn:disabled { 
+            opacity: 0.4; 
+            cursor: not-allowed; 
+        }
+
+        .send-btn svg { 
+            width: 20px; 
+            height: 20px; 
+        }
+
+        /* Mobile tweaks */
+        @media (max-width: 480px) {
+            body { padding: 10px; }
+            .persona-btn { font-size: 13px; padding: 12px 12px; }
+            .message-row { max-width: 92%; }
+            .bubble { font-size: 14.5px; padding: 14px 18px; }
+            .app { border-radius: 16px; height: 95dvh; }
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+
+    <div class="header">
+        <div class="header-label">Chat with</div>
+        <div class="persona-buttons">
+            <button class="persona-btn" data-persona="kshitij" onclick="switchPersona('kshitij')">Kshitij Mishra</button>
+            <button class="persona-btn" data-persona="abhimanyu" onclick="switchPersona('abhimanyu')">Abhimanyu Saxena</button>
+            <button class="persona-btn" data-persona="anshuman" onclick="switchPersona('anshuman')">Anshuman Singh</button>
+        </div>
+    </div>
+
+    <div class="chat-window" id="chatWindow"></div>
+
+    <div class="input-area">
+        <input type="text" id="msgInput" placeholder="Type a message..." onkeydown="onKey(event)" autocomplete="off">
+        <button class="send-btn" id="sendBtn" onclick="send()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+        </button>
+    </div>
+
+</div>
+
+<script>
+    // JavaScript remains exactly the same - no changes needed
+    const PERSONAS = {
+    kshitij: {
+        label: 'Kshitij Mishra',
+        image: 'images/kshitij.jpg',
+        greeting: 'What are you building these days?',
+        accent: '#6366f1',
+        accentLight: '#1c1c3a',
+        chips: [
+            'How do I get better at problem solving?',
+            'How should I start a new project?',
+            'How do I stay consistent daily?'
+        ]
+    },
+
+    abhimanyu: {
+        label: 'Abhimanyu Saxena',
+        image: 'images/abhimanyu.jpg',
+        greeting: 'Yo — what are we cooking today? 🔥',
+        accent: '#f97316',
+        accentLight: '#281a0e',
+        chips: [
+            'What should I build right now?',
+            'How do I learn AI fast?',
+            'Give me a startup idea'
+        ]
+    },
+
+    anshuman: {
+        label: 'Anshuman Singh',
+        image: 'images/anshuman.png',
+        greeting: "Tell me — what are you thinking about?",
+        accent: '#10b981',
+        accentLight: '#0d2820',
+        chips: [
+            'I feel confused about my career',
+            'How do I grow long term?',
+            'Job or startup — what’s better?'
+        ]
+    }
+};
+
+    let currentPersona = null;
+    let messages = [];
+    let busy = false;
+
+    function setAccent(persona) {
+        const p = PERSONAS[persona];
+        document.documentElement.style.setProperty('--accent', p.accent);
+        document.documentElement.style.setProperty('--accent-light', p.accentLight);
+    }
+
+    function switchPersona(persona) {
+        if (persona === currentPersona) return;
+        currentPersona = persona;
+        messages = [];
+
+        document.querySelectorAll('.persona-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.persona === persona);
+        });
+        setAccent(persona);
+        renderGreeting();
+    }
+
+    function renderGreeting() {
+        const win = document.getElementById('chatWindow');
+        win.innerHTML = '';
+
+        const p = PERSONAS[currentPersona];
+        appendBotBubble(p.greeting);
+        appendChips(p.chips);
+        scrollDown();
+    }
+
+    function makeAvatar() {
+        const p = PERSONAS[currentPersona];
+        const av = document.createElement('div');
+        av.className = 'avatar';
+        const img = document.createElement('img');
+        img.src = p.image;
+        img.alt = p.label;
+        av.appendChild(img);
+        return av;
+    }
+
+    function appendBotBubble(text, isError = false) {
+        const win = document.getElementById('chatWindow');
+
+        const row = document.createElement('div');
+        row.className = 'message-row bot';
+
+        const bub = document.createElement('div');
+        bub.className = 'bubble' + (isError ? ' error' : '');
+        bub.textContent = text;
+
+        row.appendChild(makeAvatar());
+        row.appendChild(bub);
+        win.appendChild(row);
+        scrollDown();
+        return row;
+    }
+
+    function appendUserBubble(text) {
+        const win = document.getElementById('chatWindow');
+
+        const row = document.createElement('div');
+        row.className = 'message-row user';
+
+        const bub = document.createElement('div');
+        bub.className = 'bubble';
+        bub.textContent = text;
+
+        row.appendChild(bub);
+        win.appendChild(row);
+        scrollDown();
+    }
+
+    function appendChips(chips) {
+        const win = document.getElementById('chatWindow');
+
+        const row = document.createElement('div');
+        row.className = 'chips-row';
+
+        chips.forEach(text => {
+            const btn = document.createElement('button');
+            btn.className = 'chip';
+            btn.textContent = text;
+            btn.onclick = () => {
+                row.remove();
+                send(text);
+            };
+            row.appendChild(btn);
+        });
+
+        win.appendChild(row);
+    }
+
+    function showTyping() {
+        const win = document.getElementById('chatWindow');
+
+        const row = document.createElement('div');
+        row.className = 'typing-row';
+        row.id = 'typingRow';
+
+        const dots = document.createElement('div');
+        dots.className = 'typing-dots';
+        dots.innerHTML = '<span></span><span></span><span></span>';
+
+        row.appendChild(makeAvatar());
+        row.appendChild(dots);
+        win.appendChild(row);
+        scrollDown();
+    }
+
+    function hideTyping() {
+        document.getElementById('typingRow')?.remove();
+    }
+
+    function scrollDown() {
+        const win = document.getElementById('chatWindow');
+        win.scrollTop = win.scrollHeight;
+    }
+
+    function setUI(disabled) {
+        document.getElementById('msgInput').disabled = disabled;
+        document.getElementById('sendBtn').disabled = disabled;
+    }
+
+    async function send(overrideText) {
+        if (busy) return;
+
+        const input = document.getElementById('msgInput');
+        const text = overrideText ?? input.value.trim();
+        if (!text) return;
+
+        input.value = '';
+        busy = true;
+        setUI(true);
+
+        appendUserBubble(text);
+        messages.push({ role: 'user', content: text });
+        showTyping();
+
+        try {
+            const res = await fetch('http://localhost:3000/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ persona: currentPersona, messages })
+            });
+
+            hideTyping();
+
+            if (!res.ok) {
+                const body = await res.json().catch(() => ({}));
+                throw new Error(body.error || `Request failed (${res.status})`);
+            }
+
+            const { reply } = await res.json();
+            appendBotBubble(reply);
+            messages.push({ role: 'assistant', content: reply });
+
+        } catch (err) {
+            hideTyping();
+            appendBotBubble("Something went wrong — mind trying that again?", true);
+            messages.pop();
+        } finally {
+            busy = false;
+            setUI(false);
+            document.getElementById('msgInput').focus();
+        }
+    }
+
+    function onKey(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            send();
+        }
+    }
+
+    // Boot with first persona
+    switchPersona('kshitij');
+</script>
+</body>
+</html>
