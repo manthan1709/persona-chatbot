@@ -582,7 +582,7 @@
         showTyping();
 
         try {
-            const res = await fetch('https://persona-chatbot-rqnu.onrender.com', {
+            const res = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ persona: currentPersona, messages })
